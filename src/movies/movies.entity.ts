@@ -1,0 +1,48 @@
+import { Genre } from 'src/genres/genres.entity';
+import { Rating } from 'src/ratings/ratings.entity';
+import { Showtime } from 'src/showtimes/showtimes.entity';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+} from 'typeorm';
+
+@Entity('movies')
+export class Movie {
+  @PrimaryGeneratedColumn()
+  movie_id: number;
+
+  @Column({ type: 'varchar', length: 255, nullable: false })
+  title: string;
+
+  @Column({ type: 'int', nullable: true })
+  genre_id: number;
+
+  @Column({ type: 'text', nullable: true })
+  description: string;
+
+  @Column({ type: 'int', nullable: false })
+  duration: number;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  poster_url: string;
+
+  @CreateDateColumn()
+  created_at: Date;
+
+  @UpdateDateColumn()
+  updated_at: Date;
+
+  @ManyToOne(() => Genre, (genre) => genre.movies, { nullable: true })
+  genre: Genre;
+
+  @OneToMany(() => Showtime, (showtime) => showtime.movie)
+  showtimes: Showtime[];
+
+  @OneToMany(() => Rating, (rating) => rating.movie)
+  ratings: Rating[];
+}
