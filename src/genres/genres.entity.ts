@@ -1,5 +1,13 @@
 import { Movie } from 'src/movies/movies.entity';
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToMany,
+  JoinTable,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 @Entity('genres')
 export class Genre {
@@ -12,6 +20,27 @@ export class Genre {
   @Column({ type: 'text', nullable: true })
   description: string;
 
-  @OneToMany(() => Movie, (movie) => movie.genre)
+  @ManyToMany(() => Movie, (movie) => movie.genres)
+  @JoinTable({
+    name: 'genre_movies',
+    joinColumns: [
+      {
+        name: 'genre_id',
+        referencedColumnName: 'genre_id',
+      },
+    ],
+    inverseJoinColumns: [
+      {
+        name: 'movie_id',
+        referencedColumnName: 'movie_id',
+      },
+    ],
+  })
   movies: Movie[];
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

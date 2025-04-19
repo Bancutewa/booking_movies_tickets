@@ -9,6 +9,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  ManyToMany,
 } from 'typeorm';
 
 @Entity('movies')
@@ -18,9 +19,6 @@ export class Movie {
 
   @Column({ type: 'varchar', length: 255, nullable: false })
   title: string;
-
-  @Column({ type: 'int', nullable: true })
-  genre_id: number;
 
   @Column({ type: 'text', nullable: true })
   description: string;
@@ -37,8 +35,8 @@ export class Movie {
   @UpdateDateColumn()
   updated_at: Date;
 
-  @ManyToOne(() => Genre, (genre) => genre.movies, { nullable: true })
-  genre: Genre;
+  @ManyToMany(() => Genre, (genre) => genre.movies)
+  genres: Genre[];
 
   @OneToMany(() => Showtime, (showtime) => showtime.movie)
   showtimes: Showtime[];
