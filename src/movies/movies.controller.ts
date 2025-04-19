@@ -8,35 +8,35 @@ import {
   Body,
   ParseIntPipe,
   HttpCode,
-  NotFoundException,
   HttpException,
   HttpStatus,
   Query,
+  NotFoundException,
 } from '@nestjs/common';
-import { GenreService } from './genres.service';
-import { CreateGenreDto, QueryGenreDto, UpdateGenreDto } from './genres.dto';
-import { Genre } from './genres.entity';
+import { MoviesService } from './movies.service';
+import { CreateMovieDto, QueryMovieDto, UpdateMovieDto } from './movies.dto';
+import { Movie } from './movies.entity';
 
-@Controller('api/v1/genres')
-export class GenresController {
-  constructor(private readonly genreService: GenreService) {}
+@Controller('api/v1/movies')
+export class MoviesController {
+  constructor(private readonly moviesService: MoviesService) {}
 
-  // Lấy danh sách tất cả thể loại
+  // Get all movies
   @Get()
-  async findAll(@Query() query: QueryGenreDto): Promise<{
+  async findAll(@Query() query: QueryMovieDto): Promise<{
     success: boolean;
     total: number;
     counts: number;
-    data: Genre[] | string;
+    data: Movie[] | string;
   }> {
     try {
-      const response = await this.genreService.findAll(query);
+      const response = await this.moviesService.findAll(query);
       if (response.length === 0) {
         return {
           success: true,
           total: 0,
           counts: 0,
-          data: 'No genres found',
+          data: 'No movies found',
         };
       }
       return {
@@ -57,44 +57,20 @@ export class GenresController {
     }
   }
 
-  // Lấy thông tin một thể loại theo ID
+  // Get a single movie by ID
   @Get(':id')
   async findOne(
     @Param('id', ParseIntPipe) id: number,
-  ): Promise<{ success: boolean; data: Genre }> {
-    const response = await this.genreService.findOne(id);
+  ): Promise<{ success: boolean; data: Movie }> {
     try {
-      if (!response) {
-        throw new NotFoundException(`Genre with ID ${id} not found`);
-      }
-      return { success: true, data: response };
-    } catch (error) {
-      throw new HttpException(
-        {
-          success: false,
-          error: 'Server error',
-          message: error.message,
-        },
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  // Tạo thể loại mới
-  @Post()
-  async create(
-    @Body() createGenreDto: CreateGenreDto,
-  ): Promise<{ success: boolean; data: Genre }> {
-    const response = await this.genreService.create(createGenreDto);
-    try {
+      const response = await this.moviesService.findOne(id);
       if (!response) {
         throw new HttpException(
           {
             success: false,
-            error: 'Server error',
-            message: 'Failed to create genre',
+            error: `Movie with ID ${id} not found`,
           },
-          HttpStatus.INTERNAL_SERVER_ERROR,
+          HttpStatus.NOT_FOUND,
         );
       }
       return { success: true, data: response };
@@ -110,16 +86,42 @@ export class GenresController {
     }
   }
 
-  // Cập nhật thông tin thể loại
+  // Create a new movie
+  @Post()
+  async create(
+    @Body() createMovieDto: CreateMovieDto,
+  ): Promise<{ success: boolean; data: Movie }> {
+    try {
+      const response = await this.moviesService.create(createMovieDto);
+      return { success: true, data: response };
+    } catch (error) {
+      throw new HttpException(
+        {
+          success: false,
+          error: 'Server error',
+          message: error.message,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  // Update a movie by ID
   @Put(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateGenreDto: UpdateGenreDto,
-  ): Promise<{ success: boolean; data: Genre }> {
-    const response = await this.genreService.update(updateGenreDto, id);
+    @Body() updateMovieDto: UpdateMovieDto,
+  ): Promise<{ success: boolean; data: Movie }> {
     try {
+      const response = await this.moviesService.update(id, updateMovieDto);
       if (!response) {
-        throw new NotFoundException(`Genre with ID ${id} not found`);
+        throw new HttpException(
+          {
+            success: false,
+            error: `Movie with ID ${id} not found`,
+          },
+          HttpStatus.NOT_FOUND,
+        );
       }
       return { success: true, data: response };
     } catch (error) {
@@ -134,19 +136,25 @@ export class GenresController {
     }
   }
 
-  // Xóa thể loại
+  // Delete a movie by ID
   @Delete(':id')
   @HttpCode(204)
   async remove(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<{ success: boolean; data: string }> {
-    const response = await this.genreService.remove(id);
     try {
-      if (response === undefined) {
-        throw new NotFoundException(`Genre with ID ${id} not found`);
-      }
-      return { success: true, data: `Genre with ID ${id} has been deleted` };
+      await this.moviesService.remove(id);
+      return { success: true, data: `Movie with ID ${id} has been deleted` };
     } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new HttpException(
+          {
+            success: false,
+            error: `Movie with ID ${id} not found`,
+          },
+          HttpStatus.NOT_FOUND,
+        );
+      }
       throw new HttpException(
         {
           success: false,

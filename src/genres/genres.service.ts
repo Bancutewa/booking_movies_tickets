@@ -17,12 +17,7 @@ export class GenreService {
     private movieRepository: Repository<Movie>,
   ) {}
 
-  async findAll(query: QueryGenreDto): Promise<{
-    success: boolean;
-    total: number;
-    counts: number;
-    data: Genre[] | string;
-  }> {
+  async findAll(query: QueryGenreDto): Promise<Genre[]> {
     const { page = 1, limit = 10, sort, fields, name, ...filters } = query;
 
     // Xác thực tham số phân trang
@@ -84,14 +79,8 @@ export class GenreService {
 
     // Thực thi truy vấn
     const [genres, total] = await queryBuilder.getManyAndCount();
-    const counts = await queryBuilder.clone().getCount();
 
-    return {
-      success: genres.length > 0,
-      total: genres.length,
-      counts,
-      data: genres.length > 0 ? genres : 'No genres found',
-    };
+    return genres;
   }
 
   async findOne(id: number): Promise<Genre> {
@@ -103,8 +92,9 @@ export class GenreService {
     }
     return genre;
   }
-  async create(createGenreDto: CreateGenreDto): Promise<Genre> {
-    const { name, description } = createGenreDto;
+
+  async create(createGenreBody: CreateGenreDto): Promise<Genre> {
+    const { name, description } = createGenreBody;
 
     const existingGenre = await this.genreRepository.findOne({
       where: { name },
